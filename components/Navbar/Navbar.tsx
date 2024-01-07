@@ -63,9 +63,6 @@ export function Navbar() {
                 modalTitle="WELCOME"
                 modalTitleIconUrl="/images/navbar_icon.jpg"
                 switchToActiveChain={true}
-                auth={{
-                  loginOptional: false,  
-                }}
               />
             </div>
             {address && (
