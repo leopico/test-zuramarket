@@ -62,7 +62,6 @@ export function Navbar() {
                 btnTitle="Sign In"
                 modalTitle="WELCOME"
                 modalTitleIconUrl="/images/navbar_icon.jpg"
-{/*                 switchToActiveChain={true} */}
               />
             </div>
             {address && (
