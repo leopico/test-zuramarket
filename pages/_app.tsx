@@ -20,7 +20,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ThirdwebProvider
       clientId= {"f268fc3c482cf7c2d34decae0cc9e2e6"}
-      activeChain= {Polygon} 
+      activeChain= {NETWORK} 
       sdkOptions={{
         gasless: {
           biconomy: {
