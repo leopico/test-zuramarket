@@ -19,13 +19,13 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThirdwebProvider
-      clientId= {"f268fc3c482cf7c2d34decae0cc9e2e6"}
-      activeChain= {NETWORK} 
+      clientId={process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID}
+      activeChain={NETWORK}
       sdkOptions={{
         gasless: {
           biconomy: {
-            apiId: "vAALwwgpz.03e4b3cc-58bb-4203-85e7-6784320c62b2",
-            apiKey: "30c4b95f-8a1c-4c78-bb2a-945a6b132285",
+            apiId: process.env.NEXT_PUBLIC_BICONOMY_APIID,
+            apiKey: process.env.NEXT_PUBLIC_BICONOMY_APIKEY,
             deadlineSeconds: 3600,
           }
         } 
