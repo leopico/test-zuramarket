@@ -22,11 +22,13 @@ function MyApp({ Component, pageProps }: AppProps) {
       clientId={process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID}
       activeChain={NETWORK}
       sdkOptions={{
-        gasless: false,
-        matic: {  // Use Matic network directly
-          rpcUrl: 'https://polygon-rpc.com',
-          chainId: 137,  // Mainnet chain ID for Matic
-        }, 
+        gasless: {
+          biconomy: {
+            apiId: process.env.NEXT_PUBLIC_BICONOMY_APIID,
+            apiKey: process.env.NEXT_PUBLIC_BICONOMY_APIKEY,
+            deadlineSeconds: 3600,
+          }
+        } 
       }}
       supportedWallets={[
         metamaskWallet(),
