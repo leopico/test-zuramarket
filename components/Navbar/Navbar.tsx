@@ -10,7 +10,7 @@ import styles from "./Navbar.module.css";
  */
 export function Navbar() {
   const address = useAddress();
-  const [showMintedMessage, setShowMintedMessage] = useState(false);
+  // const [showMintedMessage, setShowMintedMessage] = useState(false);
 
   const customTheme = darkTheme({
     fontFamily: 'Futura',
@@ -25,17 +25,17 @@ export function Navbar() {
     }
   })
 
-  useEffect(() => {
-    setShowMintedMessage(true);
+  // useEffect(() => {
+  //   // setShowMintedMessage(true);
 
-    // Clear the message after a delay (e.g., 5 seconds)
-    const timeout = setTimeout(() => {
-      setShowMintedMessage(false);
-    }, 5000);
+  //   // Clear the message after a delay (e.g., 5 seconds)
+  //   // const timeout = setTimeout(() => {
+  //   //   setShowMintedMessage(false);
+  //   // }, 5000);
 
-    // Cleanup function to clear the timeout
-    return () => clearTimeout(timeout);
-  }, []);
+  //   // Cleanup function to clear the timeout
+  //   return () => clearTimeout(timeout);
+  // }, []);
 
   return (
     <section className="bg-[#191c1f] sticky top-0 z-30 shadow-sm ">
@@ -92,11 +92,7 @@ export function Navbar() {
               </Link>
             )}
           </div>
-          {showMintedMessage && (
-  <div className="fixed top-0 left-4 right-4 md:left-20 md:right-20 lg:left-80 lg:right-80 bg-green-600 text-white p-2 text-center font-bold rounded-md animate__animated animate__fadeIn animate__delay-1s">
-    🎉 Phase-1 is over , 5000 Zura-House NFTs already Minted! 🎉 , Stay Tuned for Announcement from SAGA for next mint 🌟 .
-  </div>
-)}
+       
         </nav>
       </div>
     </section>
