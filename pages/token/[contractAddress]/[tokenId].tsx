@@ -10,7 +10,7 @@ import {
   useValidEnglishAuctions,
   Web3Button,
 } from "@thirdweb-dev/react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Container from "../../../components/Container/Container";
 import { GetStaticProps, GetStaticPaths } from "next";
 import { NFT, ThirdwebSDK } from "@thirdweb-dev/sdk";
@@ -27,6 +27,8 @@ import Skeleton from "../../../components/Skeleton/Skeleton";
 import toast, { Toaster } from "react-hot-toast";
 import toastStyle from "../../../util/toastConfig";
 import { ethers } from "ethers";
+import { GiSplitCross } from "react-icons/gi";
+import axios from "axios";
 
 type Props = {
   nft: NFT;
@@ -37,8 +39,16 @@ const [randomColor1, randomColor2] = [randomColor(), randomColor()];
 
 export default function TokenPage({ nft, contractMetadata }: Props) {
   const [bidValue, setBidValue] = useState<string>();
-  const address = useAddress();
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [email, setEmail] = useState<string>("");
+  const [loader, setLoader] = useState<boolean>(false);
+  const [isAddressInList, setIsAddressInList] = useState<boolean | null>(false);
+  const [ownedNft, setOwnedNft] = useState<number>(0);
+  const address: string | undefined = useAddress();
+  const [updateUI, setUpdateUI] = useState<boolean>(false);
   // console.log(address);
+
+  console.log(isAddressInList);
 
   // Connect to marketplace smart contract
   const { contract: marketplace, isLoading: loadingContract } = useContract(
@@ -58,19 +68,6 @@ export default function TokenPage({ nft, contractMetadata }: Props) {
     address
   );
 
-  const quantityOwnedString = ownedNfts?.[0]?.quantityOwned;
-
-  let ownedNft;
-
-  if (quantityOwnedString !== undefined && typeof quantityOwnedString === 'string') {
-    // Now, safely convert the string to a number
-    ownedNft = parseInt(quantityOwnedString, 10);
-  } else {
-    console.error("Invalid or undefined quantityOwned");
-    ownedNft = 0; // or some default value
-  };
-
-  // console.log(ownedNft, typeof ownedNft);
 
   //end mint logic here we go (This is modification one)
 
@@ -125,7 +122,7 @@ export default function TokenPage({ nft, contractMetadata }: Props) {
     }
 
     return txResult;
-  }
+  };
 
   async function buyListing() {
     let txResult;
@@ -143,7 +140,84 @@ export default function TokenPage({ nft, contractMetadata }: Props) {
       throw new Error("No valid listing found for this NFT");
     }
     return txResult;
-  }
+  };
+
+  const openModal = () => {
+    setIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsOpen(false);
+  };
+
+  useEffect(() => {
+    const quantityOwnedString = ownedNfts?.[0]?.quantityOwned;
+
+    if (quantityOwnedString !== undefined && typeof quantityOwnedString === 'string') {
+      const parsedNft = parseInt(quantityOwnedString, 10);
+      setOwnedNft(parsedNft);
+    } else {
+      console.error("Invalid or undefined quantityOwned");
+      setOwnedNft(0);
+    }
+
+  }, [ownedNfts]);
+
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const addresses = await axios.get("/api/get_addresses").then((res) => res.data);
+
+        // console.log("Addresses:", addresses);
+
+        if (address && typeof address === 'string') {
+          const isAddressInList = addresses.some((item: any) =>
+            item.address.toLowerCase() === address.toLowerCase()
+          );
+
+          setIsAddressInList(isAddressInList);
+        } else {
+          console.error("Invalid or undefined address");
+        }
+      } catch (error) {
+        console.error("Error fetching addresses:", error);
+      }
+    };
+
+    fetchAddresses();
+  }, [address, updateUI]);
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    setLoader(true);
+
+    try {
+      const response = await axios.post(`/api/submit_email`, { email, address });
+
+      if (response.status === 201) {
+        toast("Email submitted successfully", {
+          icon: "✅",
+          style: toastStyle,
+          position: "bottom-center",
+        });
+        setLoader(false);
+        setEmail("");
+        setIsOpen(false);
+        setUpdateUI(true);
+      }
+
+    } catch (error) {
+      setLoader(false);
+      setEmail("");
+      setIsOpen(false);
+      console.error("Error:", error);
+      toast(`Email already exists!`, {
+        icon: "❌",
+        style: toastStyle,
+        position: "bottom-center",
+      });
+    }
+  };
 
   return (
     <>
@@ -159,22 +233,7 @@ export default function TokenPage({ nft, contractMetadata }: Props) {
             <div className={styles.descriptionContainer}>
               <h3 className={styles.descriptionTitle}>Description</h3>
               <p className={styles.description}>{nft.metadata.description}</p>
-
               <h3 className={styles.descriptionTitle}>Traits</h3>
-
-              {/* <div className={styles.traitsContainer}>
-                {Object.entries(nft?.metadata?.attributes || {}).map(
-                  ([key, value]) => (
-                    <div className={styles.traitContainer} key={key}>
-                      <p className={styles.traitName}>{key}</p>
-                      <p className={styles.traitValue}>
-                        {value?.toString() || ""}
-                      </p>
-                    </div>
-                  )
-                )}
-              </div> */}
-
               <div className={styles.traitsContainer}>
                 {/* @ts-ignore */}
                 {nft?.metadata?.attributes.map((attribute, index) => (
@@ -184,9 +243,7 @@ export default function TokenPage({ nft, contractMetadata }: Props) {
                   </div>
                 ))}
               </div>
-
               <h3 className={styles.descriptionTitle}>History</h3>
-
               <div className={styles.traitsContainer}>
                 {transferEvents?.map((event, index) => (
                   <div
@@ -288,167 +345,89 @@ export default function TokenPage({ nft, contractMetadata }: Props) {
                   )
                 }
                 <div className="pt-3">
-                  {
-                    !loadingOwnedNfts ? (
-                      ownedNft >= 1 ? (
-                        <div className=" bg-slate-300 rounded-lg text-center text-slate-700 w-full px-2 py-3">
-                          Can&#39;t claim more than maximum allowed quantity
-                        </div>
-                      ) : (
+                  {!loadingOwnedNfts ? (
+                    ownedNft >= 1 ? (
+                      <div className="bg-slate-300 rounded-lg text-center text-slate-700 w-full px-2 py-3">
+                        Can&#39;t claim more than the maximum allowed quantity
+                      </div>
+                    ) : (
+                      isAddressInList ? (
                         <Web3Button
                           contractAddress={NFT_COLLECTION_ADDRESS}
                           action={(nftContract) => nftContract.erc1155.claim(nft.metadata.id, 1)}
                           className={styles.btn}
                           onSuccess={() => {
-                            toast(`success!`, {
+                            toast(`Success!`, {
                               icon: "✅",
                               style: toastStyle,
                               position: "bottom-center",
                             });
                           }}
-                          onError={(e) => {
-                            toast(`failed! Reason: ${e.message}`, {
+                          onError={() => {
+                            toast(`You cannot mint properly!`, {
                               icon: "❌",
                               style: toastStyle,
                               position: "bottom-center",
                             });
                           }}
                         >
-                          Claim House Nft
+                          Claim House NFT
                         </Web3Button>
-                      )
-                    ) : (
-                      <Skeleton width="120" height="57" />
-                    )
-                  }
-                  {/*end modification for mint logic */}
-
-                </div>
-                {/* <div className={styles.pricingValue}>
-                  {loadingContract || loadingDirect || loadingAuction ? (
-                    <Skeleton width="120" height="24" />
-                  ) : (
-                    <>
-                      {directListing && directListing[0] ? (
-                        <>
-                          {directListing[0]?.currencyValuePerToken.displayValue}
-                          {" " + directListing[0]?.currencyValuePerToken.symbol}
-                        </>
-                      ) : auctionListing && auctionListing[0] ? (
-                        <>
-                          {auctionListing[0]?.buyoutCurrencyValue.displayValue}
-                          {" " + auctionListing[0]?.buyoutCurrencyValue.symbol}
-                        </>
                       ) : (
-                        "Not for sale"
-                      )}
-                    </>
-                  )}
-                </div> */}
-
-                {/* <div>
-                  {loadingAuction ? (
-                    <Skeleton width="120" height="24" />
+                        <div>
+                          <button
+                            onClick={openModal}
+                            className={`${styles.btn} rounded-lg bg-[#fff] text-gray-600 py-2`}
+                          >
+                            Submit your mail
+                          </button>
+                        </div>
+                      )
+                    )
                   ) : (
-                    <>
-                      {auctionListing && auctionListing[0] && (
-                        <>
-                          <p className={styles.label} style={{ marginTop: 12 }}>
-                            Bids starting from
-                          </p>
-
-                          <div className={styles.pricingValue}>
-                            {
-                              auctionListing[0]?.minimumBidCurrencyValue
-                                .displayValue
-                            }
-                            {" " +
-                              auctionListing[0]?.minimumBidCurrencyValue.symbol}
-                          </div>
-                        </>
-                      )}
-                    </>
+                    <Skeleton width="120" height="57" />
                   )}
-                </div> */}
 
-              </div>
-
-            </div>
-
-
-
-            {/* {loadingContract || loadingDirect || loadingAuction ? (
-              <Skeleton width="100%" height="164" />
-            ) : (
-              <>
-                <Web3Button
-                  contractAddress={MARKETPLACE_ADDRESS}
-                  action={async () => await buyListing()}
-                  className={styles.btn}
-                  onSuccess={() => {
-                    toast(`Purchase success!`, {
-                      icon: "✅",
-                      style: toastStyle,
-                      position: "bottom-center",
-                    });
-                  }}
-                  onError={(e) => {
-                    toast(`Purchase failed! Reason: ${e.message}`, {
-                      icon: "❌",
-                      style: toastStyle,
-                      position: "bottom-center",
-                    });
-                  }}
-                >
-                  Buy at asking price
-                </Web3Button>
-
-                <div className={`${styles.listingTimeContainer} ${styles.or}`}>
-                  <p className={styles.listingTime}>or</p>
                 </div>
-
-                <input
-                  className={styles.input}
-                  defaultValue={
-                    auctionListing?.[0]?.minimumBidCurrencyValue
-                      ?.displayValue || 0
-                  }
-                  type="number"
-                  step={0.000001}
-                  onChange={(e) => {
-                    setBidValue(e.target.value);
-                  }}
-                />
-
-                <Web3Button
-                  contractAddress={MARKETPLACE_ADDRESS}
-                  action={async () => await createBidOrOffer()}
-                  className={styles.btn}
-                  onSuccess={() => {
-                    toast(`Bid success!`, {
-                      icon: "✅",
-                      style: toastStyle,
-                      position: "bottom-center",
-                    });
-                  }}
-                  onError={(e) => {
-                    console.log(e);
-                    toast(`Bid failed! Reason: ${e.message}`, {
-                      icon: "❌",
-                      style: toastStyle,
-                      position: "bottom-center",
-                    });
-                  }}
-                >
-                  Place bid
-                </Web3Button>
-              </>
-            )} */}
-
-
+              </div>
+            </div>
           </div>
         </div>
       </Container>
+      {
+        isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-lg shadow-lg relative w-full max-w-xl md:w-1/2">
+              <button
+                onClick={closeModal}
+                className="absolute top-0 right-0 p-3 cursor-pointer text-gray-600 font-bold hover:text-gray-800"
+              >
+                <GiSplitCross />
+              </button>
+              <div className="flex flex-col space-y-7">
+                <p className=" text-gray-600 pt-5 text-sm font-bold">Submit your mail address for this NFT</p>
+                <form
+                  className="flex flex-col items-end"
+                  onSubmit={handleSubmit}
+                >
+                  <input
+                    type="email"
+                    value={email}
+                    required
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="px-3 p-2 rounded-lg bg-white border border-gray-500 text-gray-600 w-full"
+                  />
+                  <button className="bg-gray-700 text-white py-2 px-4 rounded mt-7">
+                    {
+                      loader ? "loading..." : "submit"
+                    }
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        )
+      }
     </>
   );
 }

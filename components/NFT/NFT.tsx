@@ -44,7 +44,7 @@ export default function NFTComponent({ nft }: Props) {
       <p className={styles.nftTokenId}>Token ID #{nft.metadata.id}</p>
       <p className={styles.nftName}>{nft.metadata.name}</p>
 
-      <div className={styles.priceContainer}>
+      {/* <div className={styles.priceContainer}>
         {loadingContract || loadingDirect || loadingAuction ? (
           <Skeleton width="100%" height="100%" />
         ) : directListing && directListing[0] ? (
@@ -74,7 +74,7 @@ export default function NFTComponent({ nft }: Props) {
             </div>
           </div>
         )}
-      </div>
+      </div> */}
     </>
   );
 }
