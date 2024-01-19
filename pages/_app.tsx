@@ -1,9 +1,9 @@
 import {
   ThirdwebProvider,
-  coinbaseWallet, 
-  embeddedWallet, 
-  metamaskWallet, 
-  trustWallet, 
+  coinbaseWallet,
+  embeddedWallet,
+  metamaskWallet,
+  trustWallet,
   walletConnect,
 } from "@thirdweb-dev/react";
 import type { AppProps } from "next/app";
@@ -28,7 +28,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             apiKey: process.env.NEXT_PUBLIC_BICONOMY_APIKEY,
             deadlineSeconds: 3600,
           }
-        } 
+        }
       }}
       supportedWallets={[
         metamaskWallet(),
